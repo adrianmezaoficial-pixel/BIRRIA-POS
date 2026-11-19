@@ -126,6 +126,8 @@ header{flex-wrap:wrap}.brand{display:flex;align-items:center;gap:10px}.brand img
 .ayin{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}.ayin .btn{width:auto;padding:8px 14px}.aynote{font-size:.72rem;color:var(--muted);text-align:center;padding:0 12px 8px}
 @media (max-width:720px){.ayfab{bottom:calc(62px + env(safe-area-inset-bottom,0px))}.aypanel{left:8px;right:8px;width:auto;bottom:calc(62px + env(safe-area-inset-bottom,0px));height:min(72vh,560px)}}
 @media print{.ayfab,.aypanel{display:none}}
+.mqr{display:inline-block;background:#fff;padding:12px;border-radius:12px;margin:12px 0}.mqr:empty{display:none}#qrsheet{display:none}
+@media print{body.pq>*{display:none!important}body.pq>#qrsheet{display:block!important;text-align:center;padding:40px;color:#000;background:#fff}#qrsheet img{width:320px;height:320px}#qrsheet h1{font:400 2.4rem "Alfa Slab One",Georgia,serif;margin:0 0 8px}#qrsheet p{font-size:1.4rem;margin:8px 0}}
 .lnk{background:none;border:0;color:inherit;font-weight:700;text-decoration:underline;cursor:pointer;text-transform:capitalize;padding:4px 0;text-align:left}.tot td{font-weight:800;background:var(--field)}.byp .tbl{border:0;border-radius:0}.rate{display:flex;align-items:center;gap:6px;margin:0;color:var(--ink)}.rate input{width:76px}.note{color:var(--muted);font-size:.85rem;margin-top:12px}.dl{font-weight:800;font-size:1.1rem;margin-bottom:14px;text-transform:capitalize}#hday{width:auto}
 textarea{width:100%;min-height:90px;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;color:inherit;resize:vertical}
 .bk{margin-top:20px}.bk p{color:var(--muted);margin:4px 0 12px}.bk .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
@@ -160,7 +162,7 @@ textarea{width:100%;min-height:90px;background:var(--field);border:1px solid var
     <button data-v="inventory">Inventario</button>
     <button data-v="reports">Caja</button>
     <button data-v="history">Históricas</button>
-    <button data-v="menu">Menú</button>
+    <button data-v="menu">Menú QR</button>
     <button data-v="fin">Finanzas</button>
     <button data-v="analysis">Análisis</button>
   </nav>
@@ -299,7 +301,7 @@ textarea{width:100%;min-height:90px;background:var(--field);border:1px solid var
   </section>
 
   <section id="v-menu" class="view">
-    <h2>Menú digital</h2>
+    <h2>Menú QR</h2>
     <div class="card">
       <h3 style="margin-bottom:14px">Datos del negocio</h3>
       <div class="fg">
@@ -311,17 +313,15 @@ textarea{width:100%;min-height:90px;background:var(--field);border:1px solid var
         <div><button type="button" id="lq" class="btn ghost sm" hidden>Quitar logo</button></div>
       </div>
     </div>
-    <div class="menu">
-      <div id="mh" class="mh"></div>
-      <div id="mi"></div>
-      <a id="wa" class="btn go wa off" target="_blank" rel="noopener">Pedir por WhatsApp</a>
-      <p id="wan" class="note">Agrega el WhatsApp de tu negocio arriba para recibir pedidos.</p>
-    </div>
-    <div class="card">
-      <h3>Código QR</h3>
-      <p class="note" style="margin:4px 0 12px">Por defecto abre un chat de WhatsApp con tu negocio. Si ya tienes un enlace de tu menú o de tus redes, pégalo aquí.</p>
-      <label for="qrl">Enlace del QR (opcional)</label><input id="qrl" placeholder="https://" autocomplete="off">
-      <div id="qr"></div><p id="qrt" class="note"></p>
+    <div class="card bk">
+      <h3>Menú digital para tus clientes</h3>
+      <p>Genera un código QR que abre un menú con tus productos, precios, horario, dirección y WhatsApp. Imprímelo y pégalo en tu local, o comparte el enlace.</p>
+      <label for="menu-base">Página del menú</label><input id="menu-base" placeholder="https://tuusuario.github.io/BIRRIA-POS/menu.html" autocomplete="off">
+      <div id="mqr" class="mqr"></div>
+      <p id="menu-warn"></p>
+      <label for="menu-link" style="margin-top:12px">Enlace del menú</label><input id="menu-link" readonly>
+      <div class="row"><button id="menu-copy" class="btn ghost sm" type="button">Copiar enlace</button><a id="menu-open" class="btn ghost sm" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">Ver menú</a><button id="menu-print" class="btn ghost sm" type="button">Imprimir QR</button></div>
+      <p>El menú lleva tus productos y precios de este momento, sin fotos. Si los cambias, vuelve aquí y copia o imprime el QR nuevo.</p>
     </div>
     <h3 class="sh">Recetas y costos (solo para ti)</h3>
     <div class="card" style="margin-bottom:18px">
@@ -422,6 +422,7 @@ textarea{width:100%;min-height:90px;background:var(--field);border:1px solid var
   </div>
 </div>
 
+<div id="qrsheet"></div>
 <button id="ay-fab" class="ayfab" type="button" aria-label="Abrir ayuda" aria-expanded="false">? <span>Ayuda</span></button>
 <section id="ay" class="aypanel" role="dialog" aria-label="Asistente de ayuda" hidden>
   <div class="ayh"><b>Asistente de ayuda</b><div><button id="ay-menu" type="button">Temas</button><button id="ay-x" type="button" aria-label="Cerrar ayuda">✕</button></div></div>
@@ -618,23 +619,38 @@ $('#catbar').addEventListener('click',e=>{const b=e.target.closest('button');if(
 function startEdit(id){const p=state.products.find(x=>x.id==id);if(!p)return;editId=p.id;$('#pn').value=p.name;$('#pc').value=p.cat||'';$('#pp').value=p.price;$('#pi').value='';$('#pb').textContent='Actualizar producto';$('#pcx').hidden=false;window.scrollTo(0,0);$('#pn').focus()}
 $('#pcx').addEventListener('click',()=>{editId=null;$('#pf').reset();$('#pb').textContent='Guardar producto';$('#pcx').hidden=true});
 function applyBiz(){const b=state.biz,l=$('#logo');$('#bn').textContent=b.name||'Mi negocio';l.hidden=!b.logo;if(b.logo)l.src=b.logo;$('#lq').hidden=!b.logo}
-function renderMenu(){
-  const b=state.biz,P=state.products,cs=[...new Set(P.map(p=>p.cat||'Menú'))];
-  $('#mh').innerHTML=(b.logo?`<img src="${b.logo}" alt="">`:'')+`<h2>${esc(b.name||'Mi negocio')}</h2>`+(b.hours?`<p>${esc(b.hours)}</p>`:'')+(b.addr?`<p>${esc(b.addr)}</p>`:'');
-  $('#mi').innerHTML=P.length?cs.map(c=>`<h3 class="mc">${esc(c)}</h3><div class="mg">${P.filter(p=>(p.cat||'Menú')===c).map(p=>`<div class="mi">${p.img?`<img src="${p.img}" alt="">`:''}<div class="mb"><b>${esc(p.name)}</b><span class="num">${money(p.price)}</span></div><div class="qty"><button data-a="-" data-id="${p.id}" aria-label="Quitar ${esc(p.name)}">−</button><span class="num">${mc[p.id]||0}</span><button data-a="+" data-id="${p.id}" aria-label="Agregar ${esc(p.name)}">+</button></div></div>`).join('')}</div>`).join(''):'<p class="empty">Agrega productos para armar tu menú.</p>';
-  const L=P.filter(p=>mc[p.id]>0),T=L.reduce((a,p)=>a+p.price*mc[p.id],0),w=digits(b.wa),a=$('#wa'),ok=L.length&&w;
-  a.textContent='Pedir por WhatsApp'+(L.length?' · '+money(T):'');a.classList.toggle('off',!ok);
-  a.href=ok?'https://wa.me/'+w+'?text='+encodeURIComponent('Hola, quiero pedir:\n'+L.map(p=>'• '+mc[p.id]+' x '+p.name).join('\n')+'\nTotal: '+money(T)):'#';
-  $('#wan').hidden=!!w;
+const b64u=s=>btoa(String.fromCharCode(...new TextEncoder().encode(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const defMenuBase=()=>typeof location!=='undefined'&&/github\.io$/.test(location.hostname)?new URL('menu.html',location.href).href:'https://adrianmezaoficial-pixel.github.io/BIRRIA-POS/menu.html';
+function menuUrl(){
+  const b=state.biz,base=(b.menuUrl||'').trim()||defMenuBase();
+  const d={n:b.name||'',w:digits(b.wa),h:b.hours||'',d:b.addr||'',p:state.products.map(p=>[p.name,p.price,p.cat||''])};
+  return base+(base.includes('?')?'&':'?')+'m='+b64u(JSON.stringify(d));
 }
-function renderQR(){const q=$('#qr'),w=digits(state.biz.wa),v=(state.biz.qr||'').trim()||(w?'https://wa.me/'+w:'');q.innerHTML='';$('#qrt').textContent=v?'Al escanear abre: '+v:'Agrega tu WhatsApp o pega un enlace para generar el QR.';if(v&&window.QRCode)new QRCode(q,{text:v,width:176,height:176})}
-function syncBiz(){['name','wa','hours','addr'].forEach(k=>$('#b-'+k).value=state.biz[k]||'');$('#qrl').value=state.biz.qr||'';applyBiz();renderMenu();renderQR()}
-['name','wa','hours','addr'].forEach(k=>{const el=$('#b-'+k);el.addEventListener('input',()=>{state.biz[k]=el.value;save();applyBiz();renderMenu();renderQR()})});
-$('#qrl').addEventListener('input',()=>{state.biz.qr=$('#qrl').value;save();renderQR()});
+let lastMenu='';
+function renderMenu(){
+  const u=menuUrl(),w=digits(state.biz.wa),long=u.length>2000;
+  $('#menu-warn').textContent=(w?'':'Agrega tu WhatsApp en Datos del negocio para que el menú muestre tu contacto. ')+(long?'El menú es muy largo para un QR fácil de escanear: reduce productos o nombres.':'');
+  if(u===lastMenu)return;lastMenu=u;
+  $('#menu-link').value=u;$('#menu-open').href=u;
+  const q=$('#mqr');q.innerHTML='';
+  if(long)return;
+  if(window.QRCode){try{new QRCode(q,{text:u,width:240,height:240,correctLevel:QRCode.CorrectLevel.M})}catch(e){q.innerHTML=''}}
+  else q.textContent='Conéctate a internet para generar el QR.';
+}
+$('#menu-print').addEventListener('click',()=>{
+  const im=$('#mqr img'),c=$('#mqr canvas'),src=im&&im.src?im.src:(c?c.toDataURL():'');
+  if(!src){toast('Necesitas internet para generar el QR');return}
+  $('#qrsheet').innerHTML=`<h1>${esc(state.biz.name||'Nuestro menú')}</h1><p>Escanea para ver el menú y los precios</p><img src="${src}" alt="Código QR del menú">`+(digits(state.biz.wa)?`<p>WhatsApp: ${esc(state.biz.wa)}</p>`:'');
+  document.body.classList.add('pq');
+  const done=()=>{document.body.classList.remove('pq');window.removeEventListener('afterprint',done)};
+  window.addEventListener('afterprint',done);setTimeout(()=>window.print(),50);
+});
+$('#menu-copy').addEventListener('click',async()=>{const i=$('#menu-link');try{await navigator.clipboard.writeText(i.value)}catch(e){i.select();document.execCommand&&document.execCommand('copy')}toast('Enlace copiado')});
+$('#menu-base').addEventListener('input',()=>{state.biz.menuUrl=$('#menu-base').value;save();renderMenu()});
+function syncBiz(){['name','wa','hours','addr'].forEach(k=>$('#b-'+k).value=state.biz[k]||'');$('#menu-base').value=state.biz.menuUrl||'';applyBiz();renderMenu()}
+['name','wa','hours','addr'].forEach(k=>{const el=$('#b-'+k);el.addEventListener('input',()=>{state.biz[k]=el.value;save();applyBiz();renderMenu()})});
 $('#bl').addEventListener('change',e=>{const f=e.target.files[0];if(f)readImg(f,200,d=>{state.biz.logo=d;save();applyBiz();renderMenu()})});
 $('#lq').addEventListener('click',()=>{state.biz.logo='';$('#bl').value='';save();applyBiz();renderMenu()});
-$('#mi').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const id=b.dataset.id;mc[id]=Math.max(0,(mc[id]||0)+(b.dataset.a==='+'?1:-1));renderMenu()});
-$('#wa').addEventListener('click',()=>setTimeout(()=>{mc={};renderMenu()},400));
 const RFC=/^[A-Z\u00d1&]{3,4}\d{6}[A-Z\d]{3}$/,SAT_LIM=3500000;
 const ded=i=>i.cfdi&&i.pay!=='credito'&&!(i.pay==='efectivo'&&(i.cat==='Gasolina'||i.sub+i.iva>2000));
 const why=i=>!i.cfdi?'Sin factura':i.pay==='credito'?'Pendiente de pago':ded(i)?'Deducible':'Efectivo no válido';
@@ -970,7 +986,7 @@ const HELP=[
 ['v4','venta','¿Para qué sirve el método de pago y el nombre del cliente?','metodo pago tarjeta transferencia efectivo otro cliente nombre',"Antes de completar la venta eliges efectivo, tarjeta, transferencia u otro, y puedes poner el nombre del cliente (opcional). El método se usa en el corte de efectivo y en **Análisis**.",'pos'],
 ['v5','venta','¿Cómo anulo o corrijo una venta mal capturada?','anular cancelar corregir venta equivocada error devolver deshacer borrar',"En **Caja** (ventas de hoy) o en **Históricas** toca **Anular** en esa venta, elige el motivo y decide si devuelves los insumos al inventario. Queda marcada como Anulada y ya no cuenta en totales, IVA ni gráficas.",'reports'],
 ['v6','venta','¿Hay descuentos o propinas?','descuento propina rebaja promocion cortesia',"Todavía no hay campos de descuento ni de propina. Si los necesitas, avísame para agregarlos. Mientras tanto, la venta se cobra al precio del producto.",'pos'],
-['v7','venta','¿Qué pasa si vendo un producto sin receta?','receta sin vender',"Se vende normal, pero no descuenta inventario. El aviso al completar la venta te dice qué productos no tienen receta. Créala en **Menú**, al final, en Recetas.",'menu'],
+['v7','venta','¿Qué pasa si vendo un producto sin receta?','receta sin vender',"Se vende normal, pero no descuenta inventario. El aviso al completar la venta te dice qué productos no tienen receta. Créala en **Menú QR**, al final, en Recetas.",'menu'],
 ['v8','venta','¿Cómo agrego, edito o elimino productos?','producto agregar nuevo crear editar eliminar precio nombre catalogo',"En **Productos** llena nombre, categoría, precio y foto (opcional) y guarda. En la tabla usa **Editar** para cambiar algo o **Eliminar**. Cambiar un precio no modifica ventas pasadas.",'products'],
 ['v9','venta','¿Cómo funcionan las categorías de productos?','categoria categorias tacos bebidas filtro agrupar',"Escribe una categoría al crear o editar el producto. En **Vender** aparecen botones para filtrar por categoría, y en el menú digital se agrupan por ella.",'products'],
 ['v10','venta','¿Cómo pongo fotos a los productos?','foto fotos imagen imagenes producto subir logo',"Al crear o editar un producto elige la foto. La app la reduce y la guarda en tu dispositivo (y se sincroniza si tienes cuenta). Si una foto no se ve, prueba con otra imagen más pequeña.",'products'],
@@ -978,7 +994,7 @@ const HELP=[
 ['i1','inv','¿Cómo agrego un insumo al inventario?','insumo agregar inventario ingrediente nuevo existencia unidad minimo costo',"En **Inventario** escribe el nombre, la existencia actual, la unidad (kg, g, litro, pieza, manojo…), la existencia mínima y el costo unitario, y guarda.",'inventory'],
 ['i2','inv','¿Qué es la existencia mínima y el stock bajo?','minimo stock bajo reponer alerta aviso poco',"Es la cantidad a partir de la cual te quieres avisar. Cuando el insumo llega o baja de ese mínimo se marca como **Stock bajo** y, al vender, la app te dice qué reponer.",'inventory'],
 ['i3','inv','¿Qué es el costo unitario?','costo unitario precio kilo insumo',"Lo que te cuesta una unidad del insumo, en la misma unidad que usas. Por ejemplo, la carne a $180 el kg. Con él se calcula el costo de cada receta y tu margen.",'inventory'],
-['i4','inv','¿Qué es una receta y cómo la creo?','receta recetas crear ingredientes asignar configurar cantidad por producto',"Una receta dice qué insumos gasta un producto. En **Menú**, al final, elige el producto, el insumo y la cantidad por unidad vendida. Ejemplo: una Quesabirria usa 2 Tortillas y 0.10 de Carne (kg). Agrega un ingrediente por cada insumo.",'menu'],
+['i4','inv','¿Qué es una receta y cómo la creo?','receta recetas crear ingredientes asignar configurar cantidad por producto',"Una receta dice qué insumos gasta un producto. En **Menú QR**, al final, elige el producto, el insumo y la cantidad por unidad vendida. Ejemplo: una Quesabirria usa 2 Tortillas y 0.10 de Carne (kg). Agrega un ingrediente por cada insumo.",'menu'],
 ['i5','inv','¿Cómo se descuenta el inventario al vender?','descuento automatico inventario vender restar tortilla carne quesabirria consumo bajo bajar gasten gasta disminuir vendo',"Al completar una venta, por cada producto con receta se restan los insumos de la receta multiplicados por las unidades vendidas. Queda un movimiento “consumo por venta” en el historial de Inventario.",'inventory'],
 ['i6','inv','¿Cómo resto cilantro, cebolla y cosas que no se miden?','cilantro cebolla limon salsa consumo del dia no se mide sin receta manual gastar',"En **Inventario**, en **Consumo del día**, elige el insumo y la cantidad usada y registra. Se descuenta al instante, tiene botón **Deshacer** y su costo cuenta en el análisis.",'inventory'],
 ['i7','inv','¿Qué son entrada, salida y ajuste?','entrada salida ajuste movimiento inventario compra merma conteo',"En **Movimientos de inventario**: **Entrada** suma existencias (una compra), **Salida** las resta (merma, regalo) y **Ajuste** fija una cantidad nueva (por ejemplo tras contar). Anota siempre un motivo.",'inventory'],
@@ -999,11 +1015,13 @@ const HELP=[
 ['h1','hist','¿Qué es la gráfica de pastel de Históricas?','grafica pastel semana dia vende mejor circular',"Muestra cómo se reparten las ventas de la **semana anterior** entre los días. Con **Anterior** y **Siguiente** ves otras semanas, y debajo aparece tu mejor día. Cambia sola cada semana.",'history'],
 ['h2','hist','¿Cómo consulto las ventas de un día?','consultar dia fecha calendario historico ver ventas pasadas un dia especifico dia ventas sabado viernes jueves miercoles martes lunes domingo vendimos',"En **Históricas**, usa **Consultar día** o toca un día de la tabla “Todos los días”. Verás ventas, venta por producto con IVA, cada operación y el corte de efectivo.",'history'],
 ['h3','hist','¿Por qué la gráfica sale vacía?','grafica vacia sin ventas pastel no aparece',"Esa semana no tiene ventas. La semana va de lunes a domingo y las ventas anuladas no cuentan. Usa **Anterior** o **Siguiente** para otra semana.",'history'],
-['m1','menu','¿Qué es el menú digital?','menu digital clientes pedido whatsapp mostrar',"Una vista bonita de tus productos con fotos y precios. El cliente elige cantidades y toca **Pedir por WhatsApp**, que abre un chat contigo con el pedido ya escrito.",'menu'],
-['m2','menu','¿Cómo configuro el WhatsApp?','whatsapp numero configurar pedido no abre telefono lada 52',"En **Menú**, en Datos del negocio, escribe tu número con **52** y los 10 dígitos, sin espacios ni signos. El botón de pedido se activa cuando hay un número y productos elegidos.",'menu'],
-['m3','menu','¿Cómo funciona el código QR?','qr codigo escanear enlace generar',"Por defecto abre un chat de WhatsApp con tu negocio. Si tienes un enlace propio (redes, menú), pégalo en **Enlace del QR**. Para generarse necesita internet.",'menu'],
-['m4','menu','¿Mis clientes pueden ver el menú desde su celular?','clientes ver menu celular publico enlace compartir telefono vean ven publico',"Todavía no como página pública aparte: el menú de la app lo ve quien tenga tu pantalla. Para un enlace público para tus clientes hay que armar una página de menú independiente; pídemelo y lo hacemos.",'menu'],
-['m5','menu','¿Cómo cambio el nombre, el logo o el horario?','nombre negocio logo horario direccion cambiar datos',"En **Menú**, en **Datos del negocio**, cambia nombre, WhatsApp, horario, dirección y logo. El nombre y el logo también aparecen en el encabezado.",'menu'],
+['m1','menu','¿Qué es el menú digital con QR?','menu digital qr clientes mostrar precios contacto escanear',"Es una página con tus productos, precios, horario, dirección y WhatsApp que tus clientes abren desde su celular. En **Menú QR** generas el código, lo imprimes y lo pegas en tu local.",'menu'],
+['m2','menu','¿Cómo configuro el WhatsApp?','whatsapp numero configurar pedido telefono lada 52 contacto',"En **Menú QR**, en Datos del negocio, escribe tu número con **52** y los 10 dígitos, sin espacios ni signos. Es el contacto que verán tus clientes en el menú.",'menu'],
+['m3','menu','¿Cómo genero e imprimo el código QR?','qr codigo generar imprimir copiar enlace compartir ver menu cartel',"En **Menú QR** el código se genera solo con tus datos. Toca **Imprimir QR** para una hoja lista, **Copiar enlace** para mandarlo por WhatsApp o **Ver menú** para ver lo que verán tus clientes. Necesita internet.",'menu'],
+['m4','menu','Cambié precios o productos, ¿qué hago con el QR?','cambie precios productos actualizar qr nuevo reimprimir cambiar menu',"El QR lleva los productos y precios del momento en que lo generaste. Si cambias algo, vuelve a **Menú QR**, copia o imprime el QR nuevo y reemplaza el anterior.",'menu'],
+['m5','menu','¿Cómo cambio el nombre, el horario o la dirección del menú?','nombre negocio logo horario direccion cambiar datos',"En **Menú QR**, en **Datos del negocio**, cambia nombre, WhatsApp, horario y dirección: salen en el menú de tus clientes. El logo sale en el encabezado de la app.",'menu'],
+['m6','menu','El enlace del menú no abre o da error 404','menu no abre error 404 pagina enlace github menu.html subir archivo',"El campo **Página del menú** debe apuntar a tu archivo `menu.html` publicado junto a la app. Si da error, revisa que `menu.html` esté subido a tu repositorio de GitHub y espera unos minutos.",'menu'],
+['m7','menu','¿El menú de clientes lleva fotos?','fotos imagenes menu clientes productos',"No: para que el código QR sea fácil de escanear, el menú de clientes lleva solo nombres, categorías y precios. Las fotos se usan dentro de la app.",'menu'],
 ['f1','fin','¿Qué puedo hacer en Finanzas?','finanzas seccion sirve funciones modulo',"Registrar tu RFC y régimen, capturar facturas de gastos y compras, y ver por mes tu IVA cobrado, IVA acreditable, IVA a pagar y un ISR estimado, con avisos y un resumen del año.",'fin'],
 ['f2','fin','¿Cómo registro mi RFC?','rfc registrar capturar fiscal datos validar',"En **Finanzas**, en Datos fiscales, escribe tu RFC (12 caracteres para empresas, 13 para personas físicas) y elige tu régimen. La app solo revisa el formato; no lo consulta con el SAT.",'fin'],
 ['f3','fin','¿Cómo registro una factura de gasto o compra?','factura gasto compra registrar capturar proveedor subtotal iva cfdi',"En **Finanzas** llena fecha de pago, proveedor, categoría, **subtotal**, **IVA** (se calcula al 16%, puedes corregirlo), forma de pago y si tienes la factura (CFDI). En “Más datos” puedes poner RFC del proveedor, folio fiscal y concepto.",'fin'],
@@ -1076,7 +1094,7 @@ const HELP=[
 ['d3','mis','¿Cuánto IVA y ISR debo este mes?','debo mes cuanto impuestos iva isr sat llevo',()=>{const c=calc(ayMes()),R=state.fin.reg==='resico';return 'En lo que va del mes: ingresos sin IVA **'+money(c.base)+'**, IVA cobrado '+money(c.ivaC)+', IVA acreditable '+money(c.ivaA)+' → '+(c.ivaP<0?'IVA a favor **'+money(-c.ivaP)+'**':'IVA a pagar **'+money(c.ivaP)+'**')+'.'+(R?' ISR estimado RESICO: **'+money(c.isr)+'**.':' Utilidad estimada: '+money(c.util)+'.')},'fin',1],
 ['d4','mis','¿Cuánto efectivo debería haber en caja?','cuanto efectivo deberia haber caja ahora esperado',()=>{const k=cashCalc();return 'Debería haber **'+money(k.exp)+'** en efectivo (fondo '+money(k.f)+' + ventas en efectivo '+money(k.cs)+' + ingresos '+money(k.inn)+' − retiros '+money(k.out)+' − gastos en efectivo '+money(k.ex)+').'+(k.has?' Contaste '+money(Number(k.c.count))+': '+(Math.abs(k.diff)<0.005?'cuadra.':k.diff>0?'sobran '+money(k.diff)+'.':'faltan '+money(-k.diff)+'.'):'')},'reports'],
 ['d5','mis','¿Qué día vendo mejor?','que dia vendo mejor mejor dia semana dia fuerte vende mas',ayBest,'history'],
-['d6','mis','¿Qué productos no tienen receta?','productos sin receta falta receta cuales lista',()=>{const L=state.products.filter(p=>!(state.recipes[String(p.id)]||[]).length).map(p=>p.name);return L.length?'Sin receta: '+L.join(', ')+'. No descuentan inventario hasta que las crees en **Menú**.':'Todos tus productos tienen receta.'},'menu'],
+['d6','mis','¿Qué productos no tienen receta?','productos sin receta falta receta cuales lista',()=>{const L=state.products.filter(p=>!(state.recipes[String(p.id)]||[]).length).map(p=>p.name);return L.length?'Sin receta: '+L.join(', ')+'. No descuentan inventario hasta que las crees en **Menú QR**.':'Todos tus productos tienen receta.'},'menu'],
 ['d7','mis','¿Qué gastos no tienen factura este mes?','gastos sin factura este mes cuales no deducibles',()=>{const L=state.fin.inv.filter(i=>i.date.startsWith(ayMes())&&!i.cfdi);return L.length?L.length+' gasto(s) sin factura este mes por '+money(L.reduce((a,i)=>a+i.sub+i.iva,0))+': '+L.slice(0,5).map(i=>i.prov).join(', ')+'. No son deducibles.':'No tienes gastos sin factura este mes.'},'fin',1],
 ['d8','mis','¿Cuánto he gastado este mes?','cuanto gastado este mes gastos total compras mes',()=>{const L=state.fin.inv.filter(i=>i.date.startsWith(ayMes())),T=L.reduce((a,i)=>a+i.sub+i.iva,0);return L.length?'Este mes registraste **'+money(T)+'** en '+L.length+' gasto(s) o compra(s), en Finanzas.':'Todavía no hay gastos registrados este mes en **Finanzas**.'},'fin'],
 ['x1','mis','¿Qué puedes hacer? Ayuda','ayuda que puedes hacer temas ayudame opciones menu help',"Puedo explicarte cómo usar cada pestaña, resolver problemas comunes, aclarar conceptos de IVA e ISR y consultar tus propios números (ventas de hoy, insumos bajos, IVA del mes, efectivo en caja). Toca **Temas** o escribe tu duda.",null],
@@ -1104,7 +1122,7 @@ function ayMsg(t,who,go){
   const d=document.createElement('div');d.className='aym '+who;d.innerHTML=ayH(t)+(go&&GO_NAMES[go]?`<button class="aygo" data-go="${go}" type="button">Ir a ${GO_NAMES[go]}</button>`:'');
   ayLog.appendChild(d);ayLog.scrollTop=ayLog.scrollHeight;
 }
-const GO_NAMES={pos:'Vender',products:'Productos',inventory:'Inventario',reports:'Caja',history:'Históricas',menu:'Menú',fin:'Finanzas',analysis:'Análisis'};
+const GO_NAMES={pos:'Vender',products:'Productos',inventory:'Inventario',reports:'Caja',history:'Históricas',menu:'Menú QR',fin:'Finanzas',analysis:'Análisis'};
 function ayChips(ids,label){ayCh.innerHTML=ids.map(id=>{const e=HELP.find(x=>x[0]===id);return e?`<button type="button" data-id="${id}">${esc(e[2])}</button>`:''}).join('')+(label||'')}
 function ayAnswer(e){
   let a=typeof e[4]==='function'?e[4]():e[4];
